@@ -1,0 +1,18 @@
+# Use an official Python runtime as a parent image
+FROM python:3.8-slim as builder
+
+# Set the working directory to /app
+WORKDIR /app
+
+# Install Mkdocs
+RUN pip install mkdocs
+
+# Mkdir /app/site
+RUN mkdir -p /app/site/
+
+# Copy the local directory into the container at /app
+COPY . /app
+
+RUN mkdocs new .
+
+RUN mkdocs build
