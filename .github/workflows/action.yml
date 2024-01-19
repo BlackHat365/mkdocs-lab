@@ -1,0 +1,47 @@
+name: Mkdocs Build and Test
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v2
+
+    - name: Set up Docker
+      uses: docker/setup-docker-action@v2
+      with:
+        dockerfile: Dockerfile.produce
+
+    - name: Build Mkdocs Produce Image
+      run: |
+        docker build -t mkdocs-produce -f Dockerfile.produce .
+        
+    - name: Produce Mkdocs Website
+      run: |
+        docker run --rm -i mkdocs-produce produce
+
+    - name: Set up Docker for Mkdocs Serve
+      uses: docker/setup-docker-action@v2
+      with:
+        dockerfile: Dockerfile.serve
+
+    - name: Build Mkdocs Serve Image
+      run: |
+        docker build -t mkdocs-serve -f Dockerfile.serve .
+
+    - name: Test Mkdocs Serve
+      run: |
+        docker run -p 8000:8000 --rm -i mkdocs-serve serve & sleep 5
+        curl -I http://localhost:8000
+
+    - name: Clean up
+      run: |
+        docker stop $(docker ps -q)
+        docker rm $(docker ps -a -q)
+        docker rmi -f mkdocs-produce mkdocs-serve
