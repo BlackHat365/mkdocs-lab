@@ -1,0 +1,50 @@
+# Disclaimer : This Dockerfile created by myself (Aswin Hadinata) refering to some of mkdocs article / Documentation and youtube tutorial
+
+# Use an official Python runtime as a parent image
+FROM python:3.8-slim as builder
+
+# Set the working directory to /app
+WORKDIR /app
+
+# Install Mkdocs package using pip command
+RUN pip install mkdocs
+
+# Mkdir /app/site for building root directory of mkdocs
+RUN mkdir -p /app/site/
+
+# Copy the require files at local directory into the container at /app
+COPY . /app
+
+# Creating new configuration of Mkdocs for this encapsulated docker image
+RUN mkdocs new .
+
+# Building new website of mkdocs
+RUN mkdocs build
+
+# Change the working directory to /output for .tar.gz store location
+WORKDIR /output
+
+# Create a directory to store the generated site content
+RUN mkdir -p /output/site
+
+# Copy the generated site content to the output directory
+RUN cp -r /app/site/. /output/site/
+
+# to ensure files are there so will run list command to output directory
+RUN ls -al /output/
+
+# Create a tar.gz file for site / mkdocs web page data
+RUN tar -czf site.tar.gz site
+
+# Copying Entrypoint script to container image (creating entrypoint.sh first)
+COPY entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
+# Define a volume to mount the Mkdocs project directory
+VOLUME ["/app"]
+
+# Specify the output directory
+VOLUME ["/output"]
+
+# Set the entrypoint for docker image
+ENTRYPOINT ["/entrypoint.sh"]
