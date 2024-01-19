@@ -36,9 +36,15 @@ RUN ls -al /output/
 # Create a tar.gz file for site / mkdocs web page data
 RUN tar -czf site.tar.gz site
 
+# Copying Entrypoint script to container image (creating entrypoint.sh first)
+COPY entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
 # Define a volume to mount the Mkdocs project directory
 VOLUME ["/app"]
 
 # Specify the output directory
 VOLUME ["/output"]
 
+# Set the entrypoint for docker image
+ENTRYPOINT ["/entrypoint.sh"]
