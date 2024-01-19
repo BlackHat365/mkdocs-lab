@@ -1,0 +1,38 @@
+name: Build and Test Mkdocs Website
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build_and_test:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v2
+
+    - name: Set up Docker
+      uses: docker/setup-buildx-action@v1
+
+    - name: Build Mkdocs Produce Image
+      run: docker build -t mkdocs-produce -f Dockerfile.produce .
+
+    - name: Produce Mkdocs Website
+      run: docker run --rm -i mkdocs-produce produce
+
+    - name: Save Produced Mkdocs Site
+      run: docker cp $(docker create mkdocs-produce):/output/site.tar.gz ./site.tar.gz
+
+    - name: Set up Docker for Serve Image
+      uses: docker/setup-buildx-action@v1
+
+    - name: Build Mkdocs Serve Image
+      run: docker build -t mkdocs-serve -f Dockerfile.serve .
+
+    - name: Test Mkdocs Serve
+      run: docker run -p 8000:8000 --rm -i mkdocs-serve serve & sleep 5 && curl http://localhost:8000 && docker stop $(docker ps -q)
+
+    - name: Remove Unnecessary Files
+      run: rm -rf site.tar.gz
